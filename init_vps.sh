@@ -114,11 +114,12 @@ yum -y install epel-release
 #安装fial2ban
 yum -y install fail2ban fail2ban-systemd
 cp -pf /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-wget -O mody_ssh_port.s URL
+wget -O /etc/fail2ban/jail.d/jail-default.conf  https://raw.githubusercontent.com/weiguang/bash/main/fail2ban/jail-default.conf
 
 systemctl enable fail2ban
 systemctl restart fail2ban
 fail2ban-client status
+fail2ban-client status sshd
 #fail2ban-client set sshd unbanip 222.248.24.47
 
 

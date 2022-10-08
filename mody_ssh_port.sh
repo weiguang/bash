@@ -2,6 +2,7 @@
 
 #说明:SSHD服务默认监听端口是22，如果你不强制说明别的端口，”Port 22”注不注释都是开放22访问端口
 
+change_ssh_port() {
 portset=$1
 if [ ! -z "$portset" ];then
 	inputportlen=`echo "$portset"|sed 's/[0-9]//g'`
@@ -78,3 +79,6 @@ else
 	echo "--> 请输入端口号"
 	exit 1
 fi
+}
+
+change_ssh_port $1
