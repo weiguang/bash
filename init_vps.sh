@@ -1,8 +1,26 @@
 #!/bin/bash
 
-user_name=''
-user_passwd=''
+user_name='jamchen'
+read -p "输入密码:" user_passwd 
 ssh_port=1022
+
+if [ ! -n "$user_name" ]; then  
+ echo "user_name is NULL"+
+ exit -1
+else  
+ echo "user_name is: $user_name"   
+fi   
+
+if [ ! -n "$user_passwd" ]; then  
+  echo "user_passwd IS NULL"
+   exit -1
+else  
+  echo "user_passwd is: $user_passwd"  
+fi   
+
+echo "ssh_port is: $ssh_port" 
+
+yum -y install net-tools
 
 change_ssh_port() {
 portset=$1
@@ -85,8 +103,10 @@ fi
 
 useradd $user_name
 echo $user_name:$user_passwd|chpasswd
-tee /etc/sudoers.d/$user_name <<< '$user_name ALL=(ALL) ALL'
-chmod 440 /etc/sudoers.d/$user_name
+#tee /etc/sudoers.d/$user_name <<< "$user_name ALL=(ALL) NOPASSWD::ALL"
+#chmod 440 /etc/sudoers.d/$user_name
+sed "/$user_name ALL=(ALL) NOPASSWD:ALL/d" -i /etc/sudoers
+echo "$user_name ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 
 
@@ -116,7 +136,7 @@ yum -y install fail2ban fail2ban-systemd
 cp -pf /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 wget -O /etc/fail2ban/jail.d/jail-default.conf  https://raw.githubusercontent.com/weiguang/bash/main/fail2ban/jail-default.conf
 
-systemctl enable fail2ban
+#systemctl enable fail2ban
 systemctl restart fail2ban
 fail2ban-client status
 fail2ban-client status sshd
