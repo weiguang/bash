@@ -57,6 +57,7 @@ if [ ! -z "$portset" ];then
 			if [[ $systemver = "6" ]];then
 				service sshd restart && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 			else 
+				semanage port -a -t ssh_port_t -p tcp $portset
 				systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 			fi
 		}
@@ -134,7 +135,7 @@ echo "$user_name ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 
 change_ssh_port $ssh_port
-sed "/PermitRootLogin no/d" -i /etc/sudoers
+sed "/PermitRootLogin/d" -i /etc/ssh/sshd_config
 echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 
