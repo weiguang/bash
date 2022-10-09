@@ -1,8 +1,20 @@
 #!/bin/bash
 
+read_with_default_value() {
+tips=$1
+def=$2
+read  -p "请输入${tips}:" read_avlue
+if [ -z "${read_avlue}" ];then
+	read_avlue=$def
+fi
+}
+
 user_name='jamchen'
 read -p "输入密码:" user_passwd 
-ssh_port=1022
+read -p "输入域名:" domain
+read_with_default_value 'ssh端口[默认1022]' 1022
+ssh_port=$read_avlue
+read -s -n1 -p "用户名为：$user_name, 密码为:$user_passwd,域名为:$domain, ssh端口为:$ssh_port \n" comfire 
 
 if [ ! -n "$user_name" ]; then  
  echo "user_name is NULL"+
@@ -56,7 +68,7 @@ if [ ! -z "$portset" ];then
 			getSSHOpenPortCount=`netstat -anop | grep $getSSHProcessID | grep -v ::: | grep sshd | grep LISTEN | awk '{print $4}' | awk -F ":" '{print $2}' | uniq | wc -l`
 			if [ "$getSSHOpenPortCount" == "1" ] && [ "$getSSHOpenPortList" == "$portset" ];then #如果当前只打开了一个端口，且与希望设置的端口相同，无需做任何配置
 				echo "sshd服务运行端口为$portset,无需修改！！！"
-				exit 0
+				return 0
 			elif [ "$getSSHOpenPortCount" == "1" ] && [ "$getSSHOpenPortList" == "22" ];then #如果端口为22说明使用的是默认的#Port 22设置，则增加Port设置
 				listenportlent=`netstat -ano | grep -w LISTEN | grep -w $portset`
 				if [ "$listenportlent" == "" ];then #判断端口是否被占用
@@ -87,7 +99,7 @@ if [ ! -z "$portset" ];then
 			fi
 		else
 			echo "--> sshd服务未启动"
-			exit 1
+			#return 1
 			#尝试重启sshd服务
 			sshd_service_restart
 		fi
@@ -101,16 +113,27 @@ else
 fi
 }
 
-useradd $user_name
-echo $user_name:$user_passwd|chpasswd
+add_user() {
+name=$1
+passwd=$2
+id $name >& /dev/null
+if [ $? -ne 0 ]
+then
+   useradd $name
+   echo $name:$passwd|chpasswd
+fi
+}
+
+
+add_user $user_name $user_passwd
 #tee /etc/sudoers.d/$user_name <<< "$user_name ALL=(ALL) NOPASSWD::ALL"
 #chmod 440 /etc/sudoers.d/$user_name
 sed "/$user_name ALL=(ALL) NOPASSWD:ALL/d" -i /etc/sudoers
 echo "$user_name ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 
-
 change_ssh_port $ssh_port
+sed "/PermitRootLogin no/d" -i /etc/sudoers
 echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 
@@ -136,17 +159,23 @@ yum -y install fail2ban fail2ban-systemd
 cp -pf /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 wget -O /etc/fail2ban/jail.d/jail-default.conf  https://raw.githubusercontent.com/weiguang/bash/main/fail2ban/jail-default.conf
 
-#systemctl enable fail2ban
+systemctl enable fail2ban
 systemctl restart fail2ban
 fail2ban-client status
 fail2ban-client status sshd
 #fail2ban-client set sshd unbanip 222.248.24.47
 
 
-read user_name 
+#read user_name 
 
 # v2ray-agent install
 #wget -P /root -N --no-check-certificate "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh" && chmod 700 /root/install.sh && /root/install.sh
+
+wget -P /root -N --no-check-certificate "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh" && chmod 700 /root/install.sh 
+echo -e "2\n1\n124\n${domain}\n1\njamws\n\n48e1a539-c241-493e-8910-7553a981b95c\n" | bash /root/install.sh
+wget -P /root -N --no-check-certificate "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh" && chmod 700 /root/install.sh
+echo -e "17\n1\n11\n" | bash /root/install.sh
+
 
 #免密登录
 # ssh-keygen
