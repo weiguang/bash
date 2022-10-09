@@ -14,7 +14,8 @@ read -p "输入密码:" user_passwd
 read -p "输入域名:" domain
 read_with_default_value 'ssh端口[默认1022]' 1022
 ssh_port=$read_avlue
-read -s -n1 -p "用户名为：$user_name, 密码为:$user_passwd,域名为:$domain, ssh端口为:$ssh_port \n" comfire 
+read -s -n1 -p "用户名为：$user_name, 密码为:$user_passwd,域名为:$domain, ssh端口为:$ssh_port " comfire 
+echo ''
 
 if [ ! -n "$user_name" ]; then  
  echo "user_name is NULL"+
