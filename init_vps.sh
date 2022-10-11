@@ -115,9 +115,8 @@ firewall-cmd --reload
 
 
 #CentOS内置源并未包含fail2ban，需要先安装epel源
-
-#安装fial2ban
-$app_cmd -y install fail2ban #fail2ban-systemd
+#安装fial2ban #fail2ban-systemd
+$app_cmd -y install fail2ban 
 cp -pf /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 wget -O /etc/fail2ban/jail.d/jail-default.conf  https://raw.githubusercontent.com/weiguang/bash/main/fail2ban/jail-default.conf
 
