@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 read_with_default_value() {
 tips=$1
 def=$2
@@ -33,7 +34,19 @@ fi
 
 echo "ssh_port is: $ssh_port" 
 
-yum -y install net-tools
+sys_name=`cat /etc/*-release |grep "^ID="|sed 's/ID=//'| sed 's/\"//g'`
+sys_verison=`cat /etc/*-release |grep "^VERSION_ID="|sed 's/VERSION_ID="//'| sed 's/\"//g'`
+sys_like=`cat /etc/*-release |grep '^ID_LIKE='`
+if [[ $sys_like == *"debian"* ||  $sys_like == *"ubuntu"* ]]
+then
+    app_cmd='apt-get'
+else
+    app_cmd='yum'
+	$app_cmd -y install epel-release
+fi
+echo "当前系统为: $sys_name $sys_verison, app_cmd: $app_cmd"
+
+
 
 change_ssh_port() {
 portset=$1
@@ -41,6 +54,7 @@ portset=$1
 if [ ! -z "$portset" ];then
 	if [ "$inputportlen" == "" ] && [ "$portset" -gt "1" ] && [ "$portset" -lt "65535" ];then #判断用户输入是否是1-65535之间个一个整数
 		/bin/sed  -i "/^Port \d*/d" /etc/ssh/sshd_config
+		semanage port -a -t ssh_port_t -p tcp $portset
 		echo "Port $portset" >> /etc/ssh/sshd_config  && echo "--> 修改sshd运行端口为$runport成功" || { echo "--> 修改sshd运行端口为$runport失败"; ExitCode=1; }
 	else
 		echo "--> 请输入1-65535之间的一个整数"
@@ -94,9 +108,9 @@ firewall-cmd --reload
 
 
 #CentOS内置源并未包含fail2ban，需要先安装epel源
-yum -y install epel-release
+
 #安装fial2ban
-yum -y install fail2ban fail2ban-systemd
+$app_cmd -y install fail2ban #fail2ban-systemd
 cp -pf /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 wget -O /etc/fail2ban/jail.d/jail-default.conf  https://raw.githubusercontent.com/weiguang/bash/main/fail2ban/jail-default.conf
 
