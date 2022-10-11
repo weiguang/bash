@@ -74,8 +74,8 @@ passwd=$2
 id $name >& /dev/null
 if [ $? -ne 0 ]
 then
-   useradd $name
-   echo $name:$passwd|chpasswd
+   useradd $name  && echo "--> add user jamchen完成" || { echo "--> add user jamchen 失败"; ExitCode=1; }
+   echo $name:$passwd|chpasswd && echo "--> jamchen 修改密码完成" || { echo "--> jamchen 修改密码失败"; ExitCode=1; }
 fi
 }
 
@@ -92,10 +92,12 @@ sed "/PermitRootLogin/d" -i /etc/ssh/sshd_config
 echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 
+#安装install firewalld
+$app_cmd install -y firewalld
 #启动firewalld
 systemctl restart firewalld
 #设置开机启动
-systemctl enable firewalld.service
+systemctl enable firewalld
 #放行22端口
 firewall-cmd --zone=public --add-port=22/tcp --permanent
 firewall-cmd --zone=public --add-port=$ssh_port/tcp --permanent
