@@ -37,7 +37,7 @@ echo "ssh_port is: $ssh_port"
 sys_name=`cat /etc/*-release |grep "^ID="|sed 's/ID=//'| sed 's/\"//g'`
 sys_verison=`cat /etc/*-release |grep "^VERSION_ID="|sed 's/VERSION_ID="//'| sed 's/\"//g'`
 sys_like=`cat /etc/*-release |grep '^ID_LIKE='`
-if [[ $sys_like == *"debian"* ||  $sys_like == *"ubuntu"* ]]
+if [[ $sys_like == *"debian"* ||  $sys_like == *"ubuntu"*  || "$sys_name" == 'debian' || "$sys_name" == 'ubuntu' ]]
 then
     app_cmd='apt-get'
 else
