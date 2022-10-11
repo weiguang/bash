@@ -40,12 +40,15 @@ sys_like=`cat /etc/*-release |grep '^ID_LIKE='`
 if [[ $sys_like == *"debian"* ||  $sys_like == *"ubuntu"*  || "$sys_name" == 'debian' || "$sys_name" == 'ubuntu' ]]
 then
     app_cmd='apt-get'
+	ufw disable
+	$app_cmd install -y firewalld
 else
     app_cmd='yum'
 	$app_cmd -y install epel-release
 fi
 echo "当前系统为: $sys_name $sys_verison, app_cmd: $app_cmd"
 
+$app_cmd update
 
 
 change_ssh_port() {
@@ -56,6 +59,7 @@ if [ ! -z "$portset" ];then
 		/bin/sed  -i "/^Port \d*/d" /etc/ssh/sshd_config
 		semanage port -a -t ssh_port_t -p tcp $portset
 		echo "Port $portset" >> /etc/ssh/sshd_config  && echo "--> 修改sshd运行端口为$runport成功" || { echo "--> 修改sshd运行端口为$runport失败"; ExitCode=1; }
+		systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
 	else
 		echo "--> 请输入1-65535之间的一个整数"
 		exit 1
@@ -94,6 +98,7 @@ systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "
 
 #安装install firewalld
 $app_cmd install -y firewalld
+firewall-cmd --reload
 #启动firewalld
 systemctl restart firewalld
 #设置开机启动
