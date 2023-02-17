@@ -48,8 +48,7 @@ else
     app_cmd='yum'
 	$app_cmd -y install epel-release
 fi
-
-$app_cmd -y install fail2ban 
+ 
 
 echo "当前系统为: $sys_name $sys_verison, app_cmd: $app_cmd"
 
@@ -75,6 +74,26 @@ change_ssh_port() {
 		exit 1
 	fi
 }
+
+add_ssh_port() {
+	portset=$1
+
+	if [ ! -z "$portset" ];then
+		if [ "$inputportlen" == "" ] && [ "$portset" -gt "1" ] && [ "$portset" -lt "65535" ];then #判断用户输入是否是1-65535之间个一个整数
+			/bin/sed  -i "/^Port ${portset}/d" /etc/ssh/sshd_config
+			semanage port -a -t ssh_port_t -p tcp $portset
+			echo "Port $portset" >> /etc/ssh/sshd_config  && echo "--> 修改sshd运行端口为$portset成功" || { echo "--> 修改sshd运行端口为$portset失败"; ExitCode=1; }
+			systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
+		else
+			echo "--> 请输入1-65535之间的一个整数"
+			exit 1
+		fi
+	else
+		echo "--> 请输入端口号"
+		exit 1
+	fi
+}
+
 
 
 
@@ -104,6 +123,7 @@ init_firewall() {
 	systemctl enable firewalld
 	#放行22端口
 	firewall-cmd --zone=public --add-port=22/tcp --permanent
+	firewall-cmd --zone=public --add-port=10022/tcp --permanent
 	firewall-cmd --zone=public --add-port=$ssh_port/tcp --permanent
 	firewall-cmd --zone=public --add-port=443/tcp --permanent
 	firewall-cmd --zone=public --add-port=444/tcp --permanent
@@ -138,15 +158,19 @@ init_ray() {
 	# Hysteria
 	echo -e "4\n1\n443\n1\n180\n100\n30\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 	# charge camouflage station
-	echo -e "6\n10\n1\nhttps://www.bing.com\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
-
+	#echo -e "6\n10\n1\nhttps://www.bing.com\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 }
 
+init_opt() {
+     bash <(curl -fsSL "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcp.sh")
+
+}
 
 
 add_user $user_name $user_passwd
 
 change_ssh_port $ssh_port
+add_ssh_port 10022
 sed "/PermitRootLogin/d" -i /etc/ssh/sshd_config
 echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "--> sshd服务重启失败"; ExitCode=1; }
