@@ -10,10 +10,12 @@ read_with_default_value() {
 	fi
 }
 
-user_name='jamchen'
+
+read_with_default_value '新用户名[默认jamchen]' jamchen
+user_name=$read_avlue
 read -p "输入用户密码:" user_passwd 
 read -p "输入域名:" domain
-read_with_default_value 'ssh端口[默认1022]' 1022
+read_with_default_value 'ssh端口[默认10022]' 10022
 ssh_port=$read_avlue
 read -s -n1 -p "用户名为：$user_name, 密码为:$user_passwd,域名为:$domain, ssh端口为:$ssh_port " comfire 
 echo ''
@@ -54,10 +56,12 @@ echo "当前系统为: $sys_name $sys_verison, app_cmd: $app_cmd"
 
 $app_cmd -y update
 
+$app_cmd install -y wgt vim git
 
 
 change_ssh_port() {
 	portset=$1
+	$app_cmd install -y policycoreutils-python
 
 	if [ ! -z "$portset" ];then
 		if [ "$inputportlen" == "" ] && [ "$portset" -gt "1" ] && [ "$portset" -lt "65535" ];then #判断用户输入是否是1-65535之间个一个整数
@@ -145,26 +149,41 @@ init_firewall() {
 	#fail2ban-client set sshd unbanip 222.248.24.47
 
 }
+close_selinux() {
+	# colse selinux
+	if [ `grep -c -E "^SELINUX=enforcing"  /etc/selinux/config` -ne '0' ];then
+		echo "close selinux.."
+		sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+		reboot
+	else 
+		echo "selinux has colsed."
+	fi
+	}
+
+	
 
 init_ray() {
-	# v2ray-agent install
-	#wget -P /root -N --no-check-certificate "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh" && chmod 700 /root/install.sh && /root/install.sh
-	#bash <(curl -fsSL https://git.io/hysteria.sh)
+	# colse selinux
+	close_selinux
 
 	# install BBR
 	echo -e "18\n1\n11\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 	# ray
-	echo -e "2\n1\n034\n${domain}\n1\nn\njamws\n\n48e1a539-c241-493e-8910-7553a981b95c\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
+	echo -e "2\n1\n047\n${domain}\n\n\n\n48e1a539-c241-493e-8910-7553a981b95c\n8088\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 	# Hysteria
-	echo -e "4\n1\n443\n1\n180\n100\n30\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
+	#echo -e "4\n1\n443\n1\n180\n100\n30\n" | bash <(curl -fsSL #"https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 	# charge camouflage station
 	#echo -e "6\n10\n1\nhttps://www.bing.com\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
+	# add port
+	echo -e "12\n2\n28081,28082,28083,28084,28085,28086,28087,28088\n\n1\n" | bash <(curl -fsSL "https://raw.githubusercontent.com/mack-a/v2ray-agent/master/install.sh")
 }
 
 init_opt() {
      bash <(curl -fsSL "https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcp.sh")
 
 }
+
+
 
 
 add_user $user_name $user_passwd
@@ -178,7 +197,7 @@ systemctl restart sshd.service  && echo "--> sshd服务重启完成" || { echo "
 
 init_firewall
 
-init_ray
+#init_ray
 
 
 
