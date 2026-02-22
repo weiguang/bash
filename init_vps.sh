@@ -4,6 +4,9 @@
 # VPS 初始化脚本 - 支持多种 Linux 发行版
 # ============================================================
 
+# 确保 PATH 包含必要的目录（追加到现有 PATH 后）
+export PATH="$PATH:/usr/local/sbin:/usr/sbin:/sbin"
+
 # 颜色输出定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -485,12 +488,22 @@ init_firewall() {
         return
     fi
 
+    # 如果 dpkg 被中断，先修复
+    if [ "$is_debian" = true ]; then
+        if dpkg --configure -a 2>&1 | grep -q "you must manually run"; then
+            log_warn "检测到 dpkg 被中断，正在修复..."
+            dpkg --configure -a
+        fi
+    fi
+
     log_info "配置防火墙 ($fw_name)..."
 
     # Debian/Ubuntu 使用 ufw
     if [ "$is_debian" = true ]; then
         # 安装 ufw
-        $app_cmd install -y ufw
+        if ! command -v ufw &> /dev/null; then
+            $app_cmd install -y ufw
+        fi
 
         # 配置 ufw 规则
         log_info "配置 ufw 防火墙规则..."
